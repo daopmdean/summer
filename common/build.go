@@ -1,8 +1,11 @@
 package common
 
-func ResponseError(msg string) *Response {
+func BuildMongoErr(msg string) *Response {
 	return &Response{
-		Status:  ResponseStatus.Error,
-		Message: msg,
+		Status: ResponseStatus.Error,
+		Error: &ErrorResponse{
+			ErrorMessage: msg,
+			ErrorCode:    "ERR_MONGO_DB",
+		},
 	}
 }
