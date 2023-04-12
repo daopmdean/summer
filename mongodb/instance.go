@@ -9,6 +9,7 @@ import (
 	"github.com/daopmdean/summer/common"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Instance struct {
@@ -94,6 +95,66 @@ func (m *Instance) CreateMany(ctx context.Context, ents interface{}) *common.Res
 		Status:  common.ResponseStatus.Success,
 		Message: fmt.Sprintf("Create many %s (s) successfullly", m.ColName),
 		Data:    result.InsertedIDs,
+	}
+}
+
+func (m *Instance) Query(
+	ctx context.Context,
+	filter interface{},
+	skip, limit int64,
+	sortFields *bson.M,
+) *common.Response {
+	if m.col == nil {
+		return common.BuildMongoErr("Mongodb err: Collection is nil " + m.ColName)
+	}
+
+	if skip < 0 {
+		skip = 0
+	}
+
+	if limit <= 0 {
+		limit = 50
+	}
+
+	opt := &options.FindOptions{
+		Skip:  &skip,
+		Limit: &limit,
+	}
+	if sortFields != nil {
+		opt.Sort = sortFields
+	}
+
+	converted, err := ConvertToBson(filter)
+	if err != nil {
+		return common.BuildMongoErr("Mongodb err: invalid filter input")
+	}
+
+	cur, err := m.col.Find(ctx, converted, opt)
+	if err != nil {
+		return common.BuildMongoErr("Mongodb err: query failed with err" + err.Error())
+	}
+	if cur.Err() != nil {
+		return common.BuildMongoErr("Mongodb err: query failed with cur err" + cur.Err().Error())
+	}
+
+	list := m.newObjectSlice(int(limit))
+	err = cur.All(ctx, list)
+	if err != nil {
+		return &common.Response{
+			Status:  common.ResponseStatus.NotFound,
+			Message: fmt.Sprintf("Not found any match %s", m.ColName),
+		}
+	}
+
+	err = cur.Close(ctx)
+	if err != nil {
+		return common.BuildMongoErr("Mongodb err close cursor: " + err.Error())
+	}
+
+	return &common.Response{
+		Status:  common.ResponseStatus.Success,
+		Message: fmt.Sprintf("Query %s success", m.ColName),
+		Data:    list,
 	}
 }
 
