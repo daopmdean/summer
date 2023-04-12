@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"time"
 
@@ -25,27 +26,27 @@ func (m *Instance) SetDB(database *mongo.Database) {
 	m.DBName = database.Name()
 }
 
-func (m *Instance) Create(ent interface{}) *common.Response {
+func (m *Instance) Create(ctx context.Context, ent interface{}) *common.Response {
 	if m.col == nil {
-		return common.ResponseError("Mongodb err: Collection is nil " + m.ColName)
+		return common.BuildMongoErr("Mongodb err: Collection is nil " + m.ColName)
 	}
 
 	obj, err := ConvertToBson(ent)
 	if err != nil {
-		return common.ResponseError("Mongodb err: " + err.Error())
+		return common.BuildMongoErr("Mongodb err: " + err.Error())
 	}
 
 	obj["created_time"] = time.Now()
 
-	result, err := m.col.InsertOne(context.TODO(), obj)
+	result, err := m.col.InsertOne(ctx, obj)
 	if err != nil {
-		return common.ResponseError("Mongodb err: " + err.Error())
+		return common.BuildMongoErr("Mongodb err: " + err.Error())
 	}
 
 	obj["_id"] = result.InsertedID
 	ent, err = m.convertToObj(obj)
 	if err != nil {
-		return common.ResponseError("Mongodb err: " + err.Error())
+		return common.BuildMongoErr("Mongodb err: " + err.Error())
 	}
 
 	slice := m.newObjectSlice(1)
@@ -58,6 +59,41 @@ func (m *Instance) Create(ent interface{}) *common.Response {
 		Status:  common.ResponseStatus.Success,
 		Message: "Create " + m.ColName + " success",
 		Data:    sliceValue.Interface(),
+	}
+}
+
+func (m *Instance) CreateMany(ctx context.Context, ents interface{}) *common.Response {
+	if m.col == nil {
+		return common.BuildMongoErr("Mongodb err: Collection is nil " + m.ColName)
+	}
+
+	list, err := InterfaceSlice(ents)
+	if err != nil {
+		return common.BuildMongoErr("Mongodb err: invalid slice input")
+	}
+
+	now := time.Now()
+
+	var bsonList []interface{}
+	for _, item := range list {
+		bi, err := ConvertToBson(item)
+		if err != nil {
+			return common.BuildMongoErr("Mongodb err: invalid bson object")
+		}
+
+		bi["created_time"] = now
+		bsonList = append(bsonList, bi)
+	}
+
+	result, err := m.col.InsertMany(ctx, bsonList)
+	if err != nil {
+		return common.BuildMongoErr("Mongodb err: create many failed")
+	}
+
+	return &common.Response{
+		Status:  common.ResponseStatus.Success,
+		Message: fmt.Sprintf("Create many %s (s) successfullly", m.ColName),
+		Data:    result.InsertedIDs,
 	}
 }
 
