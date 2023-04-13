@@ -158,6 +158,42 @@ func (m *Instance) Query(
 	}
 }
 
+func (m *Instance) QueryOne(ctx context.Context, filter interface{}) *common.Response {
+	if m.col == nil {
+		return common.BuildMongoErr("Mongodb err: Collection is nil " + m.ColName)
+	}
+
+	converted, err := ConvertToBson(filter)
+	if err != nil {
+		return common.BuildMongoErr("Mongodb err: invalid filter input")
+	}
+
+	result := m.col.FindOne(ctx, converted)
+	if result.Err() != nil {
+		return common.BuildMongoErr("Mongodb err: query failed with err" + result.Err().Error())
+	}
+
+	return m.parseSingleResult(result, "query one")
+}
+
+func (m *Instance) parseSingleResult(result *mongo.SingleResult, action string) *common.Response {
+	obj := m.newObject()
+	err := result.Decode(obj)
+	if err != nil {
+		return common.BuildMongoErr("Mongodb err: " + action + " failed with err" + err.Error())
+	}
+
+	list := m.newObjectSlice(1)
+	listValue := reflect.Append(reflect.ValueOf(list),
+		reflect.Indirect(reflect.ValueOf(obj)))
+
+	return &common.Response{
+		Status:  common.ResponseStatus.Success,
+		Message: fmt.Sprintf("%s %s success", action, m.ColName),
+		Data:    listValue.Interface(),
+	}
+}
+
 func (m *Instance) convertToObj(b bson.M) (interface{}, error) {
 	obj := m.newObject()
 	if b == nil {
