@@ -176,6 +176,74 @@ func (m *Instance) QueryOne(ctx context.Context, filter interface{}) *common.Res
 	return m.parseSingleResult(result, "query one")
 }
 
+func (m *Instance) Update(ctx context.Context,
+	filter interface{}, updater interface{}) *common.Response {
+	if m.col == nil {
+		return common.BuildMongoErr("Mongodb err: Collection is nil " + m.ColName)
+	}
+
+	convertedFilter, err := ConvertToBson(filter)
+	if err != nil {
+		return common.BuildMongoErr("Mongodb err: invalid filter input")
+	}
+
+	convertedUpdater, err := ConvertToBson(updater)
+	if err != nil {
+		return common.BuildMongoErr("Mongodb err: invalid updater input")
+	}
+	delete(convertedUpdater, "created_time")
+	convertedUpdater["last_update_time"] = time.Now()
+
+	result, err := m.col.UpdateMany(ctx, convertedFilter, bson.M{
+		"$set": convertedUpdater,
+	})
+	if err != nil {
+		return common.BuildMongoErr("Mongodb err: update failed with err" + err.Error())
+	}
+
+	if result.MatchedCount == 0 {
+		return &common.Response{
+			Status:  common.ResponseStatus.NotFound,
+			Message: fmt.Sprintf("Not found any match %s", m.ColName),
+		}
+	}
+
+	return &common.Response{
+		Status:  common.ResponseStatus.Success,
+		Message: fmt.Sprintf("Update %s success", m.ColName),
+		Data:    []int64{result.MatchedCount},
+	}
+}
+
+func (m *Instance) UpdateOne(ctx context.Context,
+	filter interface{}, updater interface{},
+	opts ...*options.FindOneAndUpdateOptions) *common.Response {
+	if m.col == nil {
+		return common.BuildMongoErr("Mongodb err: Collection is nil " + m.ColName)
+	}
+
+	convertedFilter, err := ConvertToBson(filter)
+	if err != nil {
+		return common.BuildMongoErr("Mongodb err: invalid filter input")
+	}
+
+	convertedUpdater, err := ConvertToBson(updater)
+	if err != nil {
+		return common.BuildMongoErr("Mongodb err: invalid updater input")
+	}
+	delete(convertedUpdater, "created_time")
+	convertedUpdater["last_update_time"] = time.Now()
+
+	result := m.col.FindOneAndUpdate(ctx, convertedFilter, bson.M{
+		"$set": convertedUpdater,
+	}, opts...)
+	if result.Err() != nil {
+		return common.BuildMongoErr("Mongodb err: update failed with err" + result.Err().Error())
+	}
+
+	return m.parseSingleResult(result, "update one")
+}
+
 func (m *Instance) parseSingleResult(result *mongo.SingleResult, action string) *common.Response {
 	obj := m.newObject()
 	err := result.Decode(obj)
