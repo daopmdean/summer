@@ -392,6 +392,29 @@ func (m *Instance) IncreValue(ctx context.Context, filter interface{},
 	return m.parseSingleResult(result, "incre value")
 }
 
+func (m *Instance) Distinct(ctx context.Context, fieldName string,
+	filter interface{}, opts ...*options.DistinctOptions) *common.Response {
+	if m.col == nil {
+		return common.BuildMongoErr("Mongodb err: Collection is nil " + m.ColName)
+	}
+
+	convertedFilter, err := ConvertToBson(filter)
+	if err != nil {
+		return common.BuildMongoErr("Mongodb err: invalid filter input")
+	}
+
+	result, err := m.col.Distinct(ctx, fieldName, convertedFilter, opts...)
+	if err != nil {
+		return common.BuildMongoErr("Mongodb err: distinct failed with err" + err.Error())
+	}
+
+	return &common.Response{
+		Status:  common.ResponseStatus.Success,
+		Message: fmt.Sprintf("Distinct %s success", m.ColName),
+		Data:    result,
+	}
+}
+
 func (m *Instance) Aggregate(ctx context.Context,
 	pipeline interface{}, result interface{}) *common.Response {
 	if m.col == nil {
