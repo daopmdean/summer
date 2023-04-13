@@ -266,7 +266,6 @@ func (m *Instance) Upsert(ctx context.Context,
 	delete(convertedUpdater, "created_time")
 	convertedUpdater["last_update_time"] = time.Now()
 
-	after := options.After
 	result := m.col.FindOneAndUpdate(ctx, convertedFilter, bson.M{
 		"$set": convertedUpdater,
 		"$setOnInsert": bson.M{
@@ -274,7 +273,7 @@ func (m *Instance) Upsert(ctx context.Context,
 		},
 	}, &options.FindOneAndUpdateOptions{
 		Upsert:         &[]bool{true}[0],
-		ReturnDocument: &after,
+		ReturnDocument: &[]options.ReturnDocument{options.After}[0],
 	})
 	if result.Err() != nil {
 		return common.BuildMongoErr("Mongodb err: upsert failed with err" + result.Err().Error())
@@ -357,6 +356,40 @@ func (m *Instance) DocCount(ctx context.Context) *common.Response {
 		Message: fmt.Sprintf("Count %s success", m.ColName),
 		Data:    []int64{count},
 	}
+}
+
+func (m *Instance) IncreValue(ctx context.Context, filter interface{},
+	fieldName string, value int) *common.Response {
+	if m.col == nil {
+		return common.BuildMongoErr("Mongodb err: Collection is nil " + m.ColName)
+	}
+
+	convertedFilter, err := ConvertToBson(filter)
+	if err != nil {
+		return common.BuildMongoErr("Mongodb err: invalid filter input")
+	}
+
+	if len(fieldName) == 0 {
+		return common.BuildMongoErr("Mongodb err: empty field name")
+	}
+
+	updater := bson.M{
+		"$inc": bson.D{
+			{Key: fieldName, Value: value},
+		},
+	}
+
+	result := m.col.FindOneAndUpdate(ctx, convertedFilter, updater,
+		&options.FindOneAndUpdateOptions{
+			Upsert:         &[]bool{true}[0],
+			ReturnDocument: &[]options.ReturnDocument{options.After}[0],
+		},
+	)
+	if result.Err() != nil {
+		return common.BuildMongoErr("Mongodb err: update failed with err" + result.Err().Error())
+	}
+
+	return m.parseSingleResult(result, "incre value")
 }
 
 func (m *Instance) Aggregate(ctx context.Context,
