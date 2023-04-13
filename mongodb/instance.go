@@ -359,6 +359,28 @@ func (m *Instance) DocCount(ctx context.Context) *common.Response {
 	}
 }
 
+func (m *Instance) Aggregate(ctx context.Context,
+	pipeline interface{}, result interface{}) *common.Response {
+	if m.col == nil {
+		return common.BuildMongoErr("Mongodb err: Collection is nil " + m.ColName)
+	}
+
+	cur, err := m.col.Aggregate(ctx, pipeline)
+	if err != nil {
+		return common.BuildMongoErr("Mongodb err: aggregate failed with err" + err.Error())
+	}
+
+	err = cur.All(ctx, result)
+	if err != nil {
+		return common.BuildMongoErr("Mongodb err: aggregate failed with err" + err.Error())
+	}
+
+	return &common.Response{
+		Status:  common.ResponseStatus.Success,
+		Message: fmt.Sprintf("Aggregate %s success", m.ColName),
+	}
+}
+
 func (m *Instance) parseSingleResult(result *mongo.SingleResult, action string) *common.Response {
 	obj := m.newObject()
 	err := result.Decode(obj)
