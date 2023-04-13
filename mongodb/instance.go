@@ -244,6 +244,41 @@ func (m *Instance) UpdateOne(ctx context.Context,
 	return m.parseSingleResult(result, "update one")
 }
 
+func (m *Instance) Upsert(ctx context.Context,
+	filter interface{}, updater interface{}) *common.Response {
+	if m.col == nil {
+		return common.BuildMongoErr("Mongodb err: Collection is nil " + m.ColName)
+	}
+
+	convertedFilter, err := ConvertToBson(filter)
+	if err != nil {
+		return common.BuildMongoErr("Mongodb err: invalid filter input")
+	}
+
+	convertedUpdater, err := ConvertToBson(updater)
+	if err != nil {
+		return common.BuildMongoErr("Mongodb err: invalid updater input")
+	}
+	delete(convertedUpdater, "created_time")
+	convertedUpdater["last_update_time"] = time.Now()
+
+	after := options.After
+	result := m.col.FindOneAndUpdate(ctx, convertedFilter, bson.M{
+		"$set": convertedUpdater,
+		"$setOnInsert": bson.M{
+			"created_time": time.Now(),
+		},
+	}, &options.FindOneAndUpdateOptions{
+		Upsert:         &[]bool{true}[0],
+		ReturnDocument: &after,
+	})
+	if result.Err() != nil {
+		return common.BuildMongoErr("Mongodb err: upsert failed with err" + result.Err().Error())
+	}
+
+	return m.parseSingleResult(result, "upsert")
+}
+
 func (m *Instance) parseSingleResult(result *mongo.SingleResult, action string) *common.Response {
 	obj := m.newObject()
 	err := result.Decode(obj)
