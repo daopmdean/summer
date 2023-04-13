@@ -21,6 +21,10 @@ type Instance struct {
 	col *mongo.Collection
 }
 
+func (m *Instance) GetClient() *mongo.Client {
+	return m.db.Client()
+}
+
 func (m *Instance) SetDB(database *mongo.Database) {
 	m.db = database
 	m.col = m.db.Collection(m.ColName)
