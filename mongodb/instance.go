@@ -279,6 +279,39 @@ func (m *Instance) Upsert(ctx context.Context,
 	return m.parseSingleResult(result, "upsert")
 }
 
+func (m *Instance) Delete(ctx context.Context, filter interface{}) *common.Response {
+	if m.col == nil {
+		return common.BuildMongoErr("Mongodb err: Collection is nil " + m.ColName)
+	}
+
+	converted, err := ConvertToBson(filter)
+	if err != nil {
+		return common.BuildMongoErr("Mongodb err: invalid filter input")
+	}
+
+	if len(converted) == 0 {
+		return common.BuildMongoErr("Mongodb err: empty filter, delete all is not allowed")
+	}
+
+	result, err := m.col.DeleteMany(ctx, converted)
+	if err != nil {
+		return common.BuildMongoErr("Mongodb err: delete failed with err" + err.Error())
+	}
+
+	if result.DeletedCount == 0 {
+		return &common.Response{
+			Status:  common.ResponseStatus.NotFound,
+			Message: fmt.Sprintf("Not found any match %s", m.ColName),
+		}
+	}
+
+	return &common.Response{
+		Status:  common.ResponseStatus.Success,
+		Message: fmt.Sprintf("Delete %s success", m.ColName),
+		Data:    []int64{result.DeletedCount},
+	}
+}
+
 func (m *Instance) parseSingleResult(result *mongo.SingleResult, action string) *common.Response {
 	obj := m.newObject()
 	err := result.Decode(obj)
