@@ -316,6 +316,49 @@ func (m *Instance) Delete(ctx context.Context, filter interface{}) *common.Respo
 	}
 }
 
+func (m *Instance) Count(ctx context.Context, filter interface{}) *common.Response {
+	if m.col == nil {
+		return common.BuildMongoErr("Mongodb err: Collection is nil " + m.ColName)
+	}
+
+	converted, err := ConvertToBson(filter)
+	if err != nil {
+		return common.BuildMongoErr("Mongodb err: invalid filter input")
+	}
+
+	if len(converted) == 0 {
+		return m.DocCount(ctx)
+	}
+
+	count, err := m.col.CountDocuments(ctx, converted)
+	if err != nil {
+		return common.BuildMongoErr("Mongodb err: count failed with err" + err.Error())
+	}
+
+	return &common.Response{
+		Status:  common.ResponseStatus.Success,
+		Message: fmt.Sprintf("Count %s success", m.ColName),
+		Data:    []int64{count},
+	}
+}
+
+func (m *Instance) DocCount(ctx context.Context) *common.Response {
+	if m.col == nil {
+		return common.BuildMongoErr("Mongodb err: Collection is nil " + m.ColName)
+	}
+
+	count, err := m.col.EstimatedDocumentCount(ctx)
+	if err != nil {
+		return common.BuildMongoErr("Mongodb err: count failed with err" + err.Error())
+	}
+
+	return &common.Response{
+		Status:  common.ResponseStatus.Success,
+		Message: fmt.Sprintf("Count %s success", m.ColName),
+		Data:    []int64{count},
+	}
+}
+
 func (m *Instance) parseSingleResult(result *mongo.SingleResult, action string) *common.Response {
 	obj := m.newObject()
 	err := result.Decode(obj)
