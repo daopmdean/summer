@@ -102,6 +102,49 @@ func (m *Instance) CreateMany(ctx context.Context, ents interface{}) *common.Res
 	}
 }
 
+func (m *Instance) QueryWithOpt(
+	ctx context.Context,
+	filter interface{},
+	opt *options.FindOptions,
+) *common.Response {
+	if m.col == nil {
+		return common.BuildMongoErr("Mongodb err: Collection is nil " + m.ColName)
+	}
+
+	converted, err := ConvertToBson(filter)
+	if err != nil {
+		return common.BuildMongoErr("Mongodb err: invalid filter input")
+	}
+
+	cur, err := m.col.Find(ctx, converted, opt)
+	if err != nil {
+		return common.BuildMongoErr("Mongodb err: query failed with err" + err.Error())
+	}
+	if cur.Err() != nil {
+		return common.BuildMongoErr("Mongodb err: query failed with cur err" + cur.Err().Error())
+	}
+
+	list := m.newObjectSlice(cur.RemainingBatchLength())
+	err = cur.All(ctx, list)
+	if err != nil {
+		return &common.Response{
+			Status:  common.ResponseStatus.NotFound,
+			Message: fmt.Sprintf("Not found any match %s", m.ColName),
+		}
+	}
+
+	err = cur.Close(ctx)
+	if err != nil {
+		return common.BuildMongoErr("Mongodb err close cursor: " + err.Error())
+	}
+
+	return &common.Response{
+		Status:  common.ResponseStatus.Success,
+		Message: fmt.Sprintf("Query %s success", m.ColName),
+		Data:    list,
+	}
+}
+
 func (m *Instance) Query(
 	ctx context.Context,
 	filter interface{},
