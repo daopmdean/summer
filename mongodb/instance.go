@@ -125,7 +125,7 @@ func (m *Instance) QueryWithOpt(
 	}
 
 	list := m.newObjectSlice(cur.RemainingBatchLength())
-	err = cur.All(ctx, list)
+	err = cur.All(ctx, &list)
 	if err != nil {
 		return &common.Response{
 			Status:  common.ResponseStatus.NotFound,
@@ -185,7 +185,7 @@ func (m *Instance) Query(
 	}
 
 	list := m.newObjectSlice(int(limit))
-	err = cur.All(ctx, list)
+	err = cur.All(ctx, &list)
 	if err != nil {
 		return &common.Response{
 			Status:  common.ResponseStatus.NotFound,
@@ -525,6 +525,7 @@ func (m *Instance) newObject() interface{} {
 
 func (m *Instance) newObjectSlice(limit int) interface{} {
 	t := reflect.TypeOf(m.TemplateObj)
-	v := reflect.MakeSlice(reflect.SliceOf(t), 0, limit)
-	return v.Interface()
+	return reflect.
+		MakeSlice(reflect.SliceOf(t), 0, limit).
+		Interface()
 }
