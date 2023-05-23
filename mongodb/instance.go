@@ -519,8 +519,9 @@ func (m *Instance) convertToObj(b bson.M) (interface{}, error) {
 
 func (m *Instance) newObject() interface{} {
 	t := reflect.TypeOf(m.TemplateObj)
-	v := reflect.New(t)
-	return v.Interface()
+	return reflect.
+		New(t).
+		Interface()
 }
 
 func (m *Instance) newObjectSlice(limit int) interface{} {
