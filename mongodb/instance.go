@@ -41,7 +41,9 @@ func (m *Instance) Create(ctx context.Context, ent interface{}) *common.Response
 		return common.BuildMongoErr("Mongodb err: " + err.Error())
 	}
 
-	obj["created_time"] = time.Now()
+	if obj["created_time"] == nil {
+		obj["created_time"] = time.Now()
+	}
 
 	result, err := m.col.InsertOne(ctx, obj)
 	if err != nil {
@@ -280,6 +282,13 @@ func (m *Instance) UpdateOne(ctx context.Context,
 	}
 	delete(convertedUpdater, "created_time")
 	convertedUpdater["last_update_time"] = time.Now()
+
+	if len(opts) == 0 {
+		after := options.After
+		opts = append(opts, &options.FindOneAndUpdateOptions{
+			ReturnDocument: &after,
+		})
+	}
 
 	result := m.col.FindOneAndUpdate(ctx, convertedFilter, bson.M{
 		"$set": convertedUpdater,
