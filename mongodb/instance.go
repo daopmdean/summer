@@ -140,6 +140,16 @@ func (m *Instance) QueryWithOpt(
 		return common.BuildMongoErr("Mongodb err close cursor: " + err.Error())
 	}
 
+	if reflect.ValueOf(list).Len() == 0 {
+		return &common.Response{
+			Status: common.ResponseStatus.NotFound,
+			Error: &common.ErrorResponse{
+				ErrorCode:    "COLLECTION_NOT_FOUND",
+				ErrorMessage: fmt.Sprintf("Not found any match %s", m.ColName),
+			},
+		}
+	}
+
 	return &common.Response{
 		Status:  common.ResponseStatus.Success,
 		Message: fmt.Sprintf("Query %s success", m.ColName),
@@ -190,14 +200,27 @@ func (m *Instance) Query(
 	err = cur.All(ctx, &list)
 	if err != nil {
 		return &common.Response{
-			Status:  common.ResponseStatus.NotFound,
-			Message: fmt.Sprintf("Not found any match %s", m.ColName),
+			Status: common.ResponseStatus.NotFound,
+			Error: &common.ErrorResponse{
+				ErrorCode:    "COLLECTION_NOT_FOUND",
+				ErrorMessage: fmt.Sprintf("Not found any match %s", m.ColName),
+			},
 		}
 	}
 
 	err = cur.Close(ctx)
 	if err != nil {
 		return common.BuildMongoErr("Mongodb err close cursor: " + err.Error())
+	}
+
+	if reflect.ValueOf(list).Len() == 0 {
+		return &common.Response{
+			Status: common.ResponseStatus.NotFound,
+			Error: &common.ErrorResponse{
+				ErrorCode:    "COLLECTION_NOT_FOUND",
+				ErrorMessage: fmt.Sprintf("Not found any match %s", m.ColName),
+			},
+		}
 	}
 
 	return &common.Response{
