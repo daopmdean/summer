@@ -196,7 +196,7 @@ func (m *Instance) Query(
 		return common.BuildMongoErr("Mongodb err: query failed with cur err" + cur.Err().Error())
 	}
 
-	list := m.newObjectSlice(int(cur.RemainingBatchLength()))
+	list := m.newObjectSlice(cur.RemainingBatchLength())
 	err = cur.All(ctx, &list)
 	if err != nil {
 		return &common.Response{
