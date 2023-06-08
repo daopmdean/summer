@@ -129,10 +129,7 @@ func (m *Instance) QueryWithOpt(
 	list := m.newObjectSlice(cur.RemainingBatchLength())
 	err = cur.All(ctx, &list)
 	if err != nil {
-		return &common.Response{
-			Status:  common.ResponseStatus.NotFound,
-			Message: fmt.Sprintf("Not found any match %s", m.ColName),
-		}
+		return common.BuildMongoErr("Mongodb err decode cursor: " + err.Error())
 	}
 
 	err = cur.Close(ctx)
@@ -141,13 +138,7 @@ func (m *Instance) QueryWithOpt(
 	}
 
 	if reflect.ValueOf(list).Len() == 0 {
-		return &common.Response{
-			Status: common.ResponseStatus.NotFound,
-			Error: &common.ErrorResponse{
-				ErrorCode:    "COLLECTION_NOT_FOUND",
-				ErrorMessage: fmt.Sprintf("Not found any match %s", m.ColName),
-			},
-		}
+		return common.BuildQueryNotFound("Not found any match " + m.ColName)
 	}
 
 	return &common.Response{
@@ -214,13 +205,7 @@ func (m *Instance) Query(
 	}
 
 	if reflect.ValueOf(list).Len() == 0 {
-		return &common.Response{
-			Status: common.ResponseStatus.NotFound,
-			Error: &common.ErrorResponse{
-				ErrorCode:    "COLLECTION_NOT_FOUND",
-				ErrorMessage: fmt.Sprintf("Not found any match %s", m.ColName),
-			},
-		}
+		return common.BuildQueryNotFound("Not found any match " + m.ColName)
 	}
 
 	return &common.Response{
@@ -241,8 +226,10 @@ func (m *Instance) QueryOne(ctx context.Context, filter interface{}) *common.Res
 	}
 
 	result := m.col.FindOne(ctx, converted)
-	if result.Err() != nil {
-		return common.BuildMongoErr("Mongodb err: query failed with err" + result.Err().Error())
+	if result.Err() == mongo.ErrNoDocuments {
+		return common.BuildQueryNotFound("Not found any match " + m.ColName)
+	} else if result.Err() != nil {
+		return common.BuildMongoErr("Mongodb err: query failed with err " + result.Err().Error())
 	}
 
 	return m.parseSingleResult(result, "query one")
