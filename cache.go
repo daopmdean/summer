@@ -58,9 +58,9 @@ func (c *LCache) Len() int {
 func (c *LCache) Put(k string, v interface{}) {
 	c.l.Lock()
 
-	c.m[k] = &cacheItem{value: v}
-	if c.refreshTTL {
-		c.m[k].lastAccessed = time.Now().Unix()
+	c.m[k] = &cacheItem{
+		value:        v,
+		lastAccessed: time.Now().Unix(),
 	}
 
 	c.l.Unlock()
