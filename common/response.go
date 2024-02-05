@@ -4,17 +4,17 @@ type Response struct {
 	Status  ResponseStatusValue `json:"status"`
 	Message string              `json:"message,omitempty"`
 	Data    interface{}         `json:"data,omitempty"`
-	Paging  *PagingResponse     `json:"paging,omitempty"`
-	Error   *ErrorResponse      `json:"error,omitempty"`
+	Paging  *PagingRes          `json:"paging,omitempty"`
+	Errors  []*ErrorRes         `json:"errors,omitempty"`
 }
 
-type PagingResponse struct {
+type PagingRes struct {
 	Total int64 `json:"total,omitempty"`
 	Page  int64 `json:"page"`
 	Size  int64 `json:"size"`
 }
 
-type ErrorResponse struct {
-	ErrorCode    string `json:"errorCode"`
-	ErrorMessage string `json:"errorMessage"`
+type ErrorRes struct {
+	ErrCode string `json:"errCode"`
+	ErrMsg  string `json:"errMsg"`
 }

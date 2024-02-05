@@ -192,9 +192,11 @@ func (m *Instance) Query(
 	if err != nil {
 		return &common.Response{
 			Status: common.ResponseStatus.NotFound,
-			Error: &common.ErrorResponse{
-				ErrorCode:    "COLLECTION_NOT_FOUND",
-				ErrorMessage: fmt.Sprintf("Not found any match %s", m.ColName),
+			Errors: []*common.ErrorRes{
+				{
+					ErrCode: "COLLECTION_NOT_FOUND",
+					ErrMsg:  fmt.Sprintf("Not found any match %s", m.ColName),
+				},
 			},
 		}
 	}
