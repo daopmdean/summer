@@ -5,7 +5,7 @@ type Response struct {
 	Message string              `json:"message,omitempty"`
 	Data    interface{}         `json:"data,omitempty"`
 	Paging  *PagingRes          `json:"paging,omitempty"`
-	Errors  []*ErrorRes         `json:"errors,omitempty"`
+	Errors  []*ErrRes           `json:"errors,omitempty"`
 }
 
 type PagingRes struct {
@@ -14,7 +14,7 @@ type PagingRes struct {
 	Size  int64 `json:"size"`
 }
 
-type ErrorRes struct {
+type ErrRes struct {
 	ErrCode string `json:"errCode"`
 	ErrMsg  string `json:"errMsg"`
 }
