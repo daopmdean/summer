@@ -25,39 +25,15 @@ func InvalidRes(msg string) *Response {
 }
 
 func BuildInvalidRes(errCode, errMsg string) *Response {
-	return &Response{
-		Status: ResponseStatus.Invalid,
-		Errors: []*ErrRes{
-			{
-				ErrCode: errCode,
-				ErrMsg:  errMsg,
-			},
-		},
-	}
+	return BuildRes(ResponseStatus.Invalid, errCode, errMsg)
 }
 
 func BuildErrorRes(errCode, errMsg string) *Response {
-	return &Response{
-		Status: ResponseStatus.Error,
-		Errors: []*ErrRes{
-			{
-				ErrCode: errCode,
-				ErrMsg:  errMsg,
-			},
-		},
-	}
+	return BuildRes(ResponseStatus.Error, errCode, errMsg)
 }
 
-func BuildErrorRes(errCode, errMsg string) *Response {
-	return &Response{
-		Status: ResponseStatus.NotFound,
-		Errors: []*ErrRes{
-			{
-				ErrCode: errCode,
-				ErrMsg:  errMsg,
-			},
-		},
-	}
+func BuildNotfoundRes(errCode, errMsg string) *Response {
+	return BuildRes(ResponseStatus.NotFound, errCode, errMsg)
 }
 
 func BuildRes(status ResponseStatusValue, errCode, errMsg string) *Response {
