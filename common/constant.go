@@ -1,0 +1,6 @@
+package common
+
+const (
+	MONGO_DB_ERROR  = "MONGO_DB_ERROR"
+	QUERY_NOT_FOUND = "QUERY_NOT_FOUND"
+)
