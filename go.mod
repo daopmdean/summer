@@ -2,7 +2,10 @@ module github.com/daopmdean/summer
 
 go 1.17
 
-require go.mongodb.org/mongo-driver v1.11.3
+require (
+	github.com/golang-jwt/jwt/v5 v5.2.1
+	go.mongodb.org/mongo-driver v1.11.3
+)
 
 require (
 	github.com/golang/snappy v0.0.1 // indirect
