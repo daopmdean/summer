@@ -47,3 +47,16 @@ func BuildRes(status ResponseStatusValue, errCode, errMsg string) *Response {
 		},
 	}
 }
+
+func BuildSingleListError(errCode, errMsg string) []*ErrRes {
+	return []*ErrRes{
+		BuildSingleError(errCode, errMsg),
+	}
+}
+
+func BuildSingleError(errCode, errMsg string) *ErrRes {
+	return &ErrRes{
+		ErrCode: errCode,
+		ErrMsg:  errMsg,
+	}
+}
