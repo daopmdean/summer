@@ -253,7 +253,7 @@ func (m *Instance) Update(ctx context.Context,
 		return common.BuildMongoErr("Mongodb err: invalid updater input")
 	}
 	delete(convertedUpdater, "created_time")
-	convertedUpdater["last_update_time"] = time.Now()
+	convertedUpdater["updated_time"] = time.Now()
 
 	result, err := m.col.UpdateMany(ctx, convertedFilter, bson.M{
 		"$set": convertedUpdater,
@@ -293,7 +293,7 @@ func (m *Instance) UpdateOne(ctx context.Context,
 		return common.BuildMongoErr("Mongodb err: invalid updater input")
 	}
 	delete(convertedUpdater, "created_time")
-	convertedUpdater["last_update_time"] = time.Now()
+	convertedUpdater["updated_time"] = time.Now()
 
 	if len(opts) == 0 {
 		after := options.After
@@ -328,7 +328,7 @@ func (m *Instance) Upsert(ctx context.Context,
 		return common.BuildMongoErr("Mongodb err: invalid updater input")
 	}
 	delete(convertedUpdater, "created_time")
-	convertedUpdater["last_update_time"] = time.Now()
+	convertedUpdater["updated_time"] = time.Now()
 
 	result := m.col.FindOneAndUpdate(ctx, convertedFilter, bson.M{
 		"$set": convertedUpdater,
