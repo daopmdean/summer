@@ -8,4 +8,6 @@ type SummerClaim struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	Phone    string `json:"phone"`
+
+	Roles []string `json:"roles,omitempty"`
 }

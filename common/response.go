@@ -9,9 +9,10 @@ type Response struct {
 }
 
 type PagingRes struct {
-	Total int64 `json:"total,omitempty"`
-	Page  int64 `json:"page"`
-	Size  int64 `json:"size"`
+	TotalItems int64 `json:"totalItems,omitempty"`
+	TotalPages int64 `json:"totalPages,omitempty"`
+	Page       int64 `json:"page"`
+	Size       int64 `json:"size"`
 }
 
 type ErrRes struct {
